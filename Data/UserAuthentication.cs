@@ -15,9 +15,16 @@ namespace UserManagement.Data
         public User AuthenticateUser(UserLogin userLogin)
         {
             var user = _context.tb_Users.FirstOrDefault(
-                x => x.s_UserCode == userLogin.s_UserCode && x.s_Password == userLogin.s_Password
+                x => x.s_UserCode.ToUpper() == userLogin.s_UserCode.ToUpper() 
+                && x.s_Password.ToUpper() == userLogin.s_Password.ToUpper()
             );
 
+            return user;
+        }
+
+        public User ValidateToken(string token)
+        {
+            var user = _context.tb_Users.FirstOrDefault(x => x.s_Token == token);
             return user;
         }
     }

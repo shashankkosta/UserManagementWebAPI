@@ -15,6 +15,8 @@ using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using Newtonsoft.Json;
 using UserManagement.Models;
+using Microsoft.AspNetCore.Authentication;
+using UserManagement.Handlers;
 
 namespace UserManagement
 {
@@ -40,6 +42,10 @@ namespace UserManagement
             services.AddControllers()
                 .AddNewtonsoftJson();
 
+            services.AddAuthentication("CustomAuth")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null)
+                .AddScheme<AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomAuth", null);
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserManagement", Version = "v1" });
@@ -61,6 +67,8 @@ namespace UserManagement
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

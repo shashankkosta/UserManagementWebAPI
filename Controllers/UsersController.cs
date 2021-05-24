@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using UserManagement.Models;
-using UserManagement.Data; 
+using UserManagement.Data;
 using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using UserManagement.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace UserManagement.Controllers
 {
+    [Authorize]
     [ApiController]
     // [NonController]
     [Route("api/users")]
@@ -26,15 +29,17 @@ namespace UserManagement.Controllers
 
         // GET api/users
         [HttpGet]
+        [Authorize(AuthenticationSchemes = "BasicAuth")]
         public List<UserGet> GetAllUsers()
         {
             var users = _repository.GetAllUsers();
-            
+
             // return _repository.GetAllUsers();
             return _mapper.Map<List<UserGet>>(users);
         }
 
         // GET api/users/{id}
+        // [Authorize]
         [HttpGet("{id}", Name = "GetUserById")]
         public ActionResult<UserGet> GetUserById(int id)
         {
@@ -59,7 +64,7 @@ namespace UserManagement.Controllers
         // RETURNS 201 Created
         // [BasicAuthentication]
         [HttpPost]
-        public ActionResult<User> CreateUser([FromBody]UserPost userPost)
+        public ActionResult<User> CreateUser([FromBody] UserPost userPost)
         {
             // System.Console.WriteLine("Hello");
             // if (!ModelState.IsValid)
@@ -82,7 +87,7 @@ namespace UserManagement.Controllers
                 // return Ok("Sample web request");
                 return CreatedAtRoute("GetUserById", new { id = userModel.n_UserID }, _mapper.Map<UserGet>(userModel));
             }
-            
+
             return BadRequest();
         }
 
@@ -96,7 +101,7 @@ namespace UserManagement.Controllers
             {
                 return NotFound();
             }
-            
+
             _repository.DeleteUser(userModel);
             if (_repository.SaveChanges())
             {
@@ -164,15 +169,24 @@ namespace UserManagement.Controllers
 
         // GET api/users/authenticate
         // RETURNS 404 Not Found | 200 OK
-        [HttpGet]
+        [HttpPost]
         [Route("authenticate")]
-        public ActionResult<User> AuthenticateUser(UserLogin userLogin)
+        [AllowAnonymous]
+        public ActionResult<UserGet> AuthenticateUser(UserLogin userLogin)
         {
             var user = _userAuth.AuthenticateUser(userLogin);
             if (user == null)
                 return NotFound("Invalid User Code or Password");
-            
-            return Ok(user);
+
+            user.s_Token = Guid.NewGuid().ToString();
+
+            _repository.UpdateUser(user);
+            if (_repository.SaveChanges())
+            {
+                return Ok(_mapper.Map<UserGet>(user));
+            }
+
+            return BadRequest();
         }
     }
 }

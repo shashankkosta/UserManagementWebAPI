@@ -39,10 +39,5 @@ namespace UserManagement.Data
         {
             throw new System.NotImplementedException();
         }
-
-        public bool ValidateCredentials(string userName, string password)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

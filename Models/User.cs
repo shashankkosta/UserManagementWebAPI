@@ -35,5 +35,7 @@ namespace UserManagement.Models
 
         [Required]
         public string s_Password { get; set; }
+
+        public string s_Token { get; set; }
     }
 }
