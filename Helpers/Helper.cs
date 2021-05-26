@@ -19,5 +19,19 @@ namespace UserManagement.Helpers
             
             return hashedPassword;
         }
+
+        public static string ComputeHash(string text, string key)
+        {
+            var textBytes = Encoding.UTF8.GetBytes(text);
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+
+            var hmacsha = new System.Security.Cryptography.HMACSHA256(keyBytes);
+            
+            var hashBytes = hmacsha.ComputeHash(textBytes);
+            
+            var hashText = BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLower();
+            
+            return hashText;
+        }
     }
 }

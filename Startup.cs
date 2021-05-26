@@ -38,6 +38,7 @@ namespace UserManagement
             // services.AddScoped<IUserManagement, MockUserManagement>();
             services.AddScoped<IUserManagement, SqlUserManagement>();
             services.AddScoped<IUserAuthentication, UserAuthentication>();
+            services.AddSingleton<ITokenManager, TokenManager>();
 
             services.AddControllers()
                 .AddNewtonsoftJson();

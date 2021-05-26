@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.JsonPatch;
 using UserManagement.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using System;
+using System.Threading;
+using System.Security.Claims;
+using System.Linq;
 
 namespace UserManagement.Controllers
 {
@@ -19,12 +22,19 @@ namespace UserManagement.Controllers
         private readonly IUserManagement _repository;
         private readonly IMapper _mapper;
         private readonly IUserAuthentication _userAuth;
+        private readonly ITokenManager _tokenManager;
 
-        public UsersController(IUserManagement repository, IMapper mapper, IUserAuthentication userAuth)
+        public UsersController(
+            IUserManagement repository,
+            IMapper mapper,
+            IUserAuthentication userAuth,
+            ITokenManager tokenManager)
         {
             _repository = repository;
             _mapper = mapper;
             _userAuth = userAuth;
+            _tokenManager = tokenManager;
+            // System.Console.WriteLine("Controller " + userAuth.GetHashCode());
         }
 
         // GET api/users
@@ -169,24 +179,51 @@ namespace UserManagement.Controllers
 
         // GET api/users/authenticate
         // RETURNS 404 Not Found | 200 OK
-        [HttpPost]
-        [Route("authenticate")]
-        [AllowAnonymous]
-        public ActionResult<UserGet> AuthenticateUser(UserLogin userLogin)
+        // [HttpPost]
+        // [Route("authenticate")]
+        // [AllowAnonymous]
+        // public ActionResult<UserGet> AuthenticateUser(UserLogin userLogin)
+        // {
+        //     var user = _userAuth.AuthenticateUser(userLogin);
+        //     if (user == null)
+        //         return NotFound("Invalid User Code or Password");
+
+        //     user.s_Token = Guid.NewGuid().ToString();
+
+        //     _repository.UpdateUser(user);
+        //     if (_repository.SaveChanges())
+        //     {
+        //         return Ok(_mapper.Map<UserGet>(user));
+        //     }
+
+        //     return BadRequest();
+        // }
+
+        // GET api/users/getaccesstoken
+        // RETURNS 200 OK | 401 Unauthorized
+        [HttpGet]
+        [Route("getaccesstoken")]
+        [Authorize(AuthenticationSchemes = "BasicAuth")]
+        public ActionResult<string> GetAccessToken()
         {
-            var user = _userAuth.AuthenticateUser(userLogin);
-            if (user == null)
-                return NotFound("Invalid User Code or Password");
+            if (!Request.HttpContext.User.HasClaim(x => x.Type == ClaimTypes.NameIdentifier))
+                return Unauthorized();
 
-            user.s_Token = Guid.NewGuid().ToString();
+            var claimsId = Request.HttpContext.User.Claims.FirstOrDefault(
+                x => x.Type == ClaimTypes.NameIdentifier).Value;
 
-            _repository.UpdateUser(user);
-            if (_repository.SaveChanges())
-            {
-                return Ok(_mapper.Map<UserGet>(user));
-            }
+            int userId = 0;
+            int.TryParse(claimsId, out userId);
 
-            return BadRequest();
+            if (userId == 0)
+                return Unauthorized();
+
+            string token = _tokenManager.GenerateToken(userId);
+
+            if (token != string.Empty)
+                return Ok(token);
+
+            return Unauthorized();
         }
     }
 }

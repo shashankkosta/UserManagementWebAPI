@@ -24,6 +24,7 @@ namespace UserManagement.Handlers
             IUserAuthentication userAuth) : base(options, logger, encoder, clock)
         {
             _userAuth = userAuth;
+            // System.Console.WriteLine("Basic " + userAuth.GetHashCode());
         }
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -64,9 +65,13 @@ namespace UserManagement.Handlers
                 var claims = new[] {
                     new Claim(ClaimTypes.NameIdentifier, user.n_UserID.ToString()),
                     new Claim(ClaimTypes.Name, user.s_UserCode)
-                    // new Claim(ClaimTypes.Role, user.n_Role == "1" ? "Normal" : "Admin")),
+                    // new Claim("Test", user.n_Role == "1" ? "Admin" : "Normal")),
                 };
                 var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);
+
+                // Add Claims to Request
+                Request.HttpContext.User.AddIdentity(claimsIdentity);
+
                 var principal = new ClaimsPrincipal(claimsIdentity);
 
                 var authTicket = new AuthenticationTicket(principal, Scheme.Name);
