@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
@@ -39,6 +40,12 @@ namespace UserManagement.Handlers
                 // Authorization Header is Base64 String
                 var authHeader = AuthenticationHeaderValue.Parse(Request.Headers["Authorization"]);
 
+                if (authHeader.Scheme.ToUpper() != "BASIC")
+                {
+                    Request.HttpContext.Response.Headers.Add("WWW-Authenticate", "Basic");
+                    return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Scheme"));
+                }
+
                 // Getting Auth Header value in Bytes
                 var authHeaderBytes = Convert.FromBase64String(authHeader.Parameter);
 
@@ -64,7 +71,7 @@ namespace UserManagement.Handlers
 
                 var claims = new[] {
                     new Claim(ClaimTypes.NameIdentifier, user.n_UserID.ToString()),
-                    new Claim(ClaimTypes.Name, user.s_UserCode)
+                    new Claim(ClaimTypes.Name, user.s_UserCode),
                     // new Claim("Test", user.n_Role == "1" ? "Admin" : "Normal")),
                 };
                 var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);

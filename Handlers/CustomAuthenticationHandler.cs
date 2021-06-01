@@ -15,15 +15,18 @@ namespace UserManagement.Handlers
     public class CustomAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         private readonly IUserAuthentication _userAuth;
+        private readonly ITokenManager _tokenManager;
 
         public CustomAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
             ISystemClock clock,
-            IUserAuthentication userAuth) : base(options, logger, encoder, clock)
+            IUserAuthentication userAuth,
+            ITokenManager tokenManager) : base(options, logger, encoder, clock)
         {
             _userAuth = userAuth;
+            _tokenManager = tokenManager;
         }
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -40,14 +43,23 @@ namespace UserManagement.Handlers
                 if (authHeader.Scheme.ToUpper() != "BEARER")
                     return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Header"));
 
-                User user = _userAuth.ValidateToken(authHeader.Parameter);
-                if (user == null)
+                // User user = _userAuth.ValidateToken(authHeader.Parameter);
+                // if (user == null)
+                //     return Task.FromResult(AuthenticateResult.Fail("Invalid Token"));
+
+                // var claims = new[] {
+                //     new Claim(ClaimTypes.NameIdentifier, user.n_UserID.ToString()),
+                //     new Claim(ClaimTypes.Name, user.s_UserCode)
+                // };
+
+                int nUserId = _tokenManager.ValidateToken(authHeader.Parameter);
+                if (nUserId <= 0)
                     return Task.FromResult(AuthenticateResult.Fail("Invalid Token"));
 
-                var claims = new[] {
-                    new Claim(ClaimTypes.NameIdentifier, user.n_UserID.ToString()),
-                    new Claim(ClaimTypes.Name, user.s_UserCode)
+                var claims = new [] {
+                    new Claim(ClaimTypes.NameIdentifier, nUserId.ToString())
                 };
+
                 var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);
                 var principal = new ClaimsPrincipal(claimsIdentity);
 

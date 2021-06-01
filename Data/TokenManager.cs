@@ -22,11 +22,10 @@ namespace UserManagement.Data
         {
             // Token First Part - Start
 
-            CustomToken customToken = new CustomToken 
+            CustomToken customToken = new CustomToken
             {
                 Id = id,
-                Expiry = DateTime.Now.AddSeconds(_tokenExpiry).Ticks,
-                Owner = "Normal"
+                Expiry = DateTime.Now.AddSeconds(_tokenExpiry).Ticks
             };
 
             string tokenString = JsonConvert.SerializeObject(customToken);
@@ -44,6 +43,45 @@ namespace UserManagement.Data
             var hash = Helper.ComputeHash(tokenHash, _secretKey);
 
             return tokenHash + "|" + hash;
+        }
+
+        public int ValidateToken(string token)
+        {
+            try
+            {
+                var tokenParameter = token.Split("|");
+                if (tokenParameter.Length != 2)
+                {
+                    Console.WriteLine("Invalid Token");
+                    return -2;
+                }
+
+                var tokenBytes = Convert.FromBase64String(tokenParameter[0]);
+                var tokenString = Encoding.UTF8.GetString(tokenBytes);
+
+                CustomToken customToken = JsonConvert.DeserializeObject<CustomToken>(tokenString);
+
+                var tokenExpiry = new DateTime(customToken.Expiry);
+                if (DateTime.Compare(DateTime.Now, tokenExpiry) > 0)
+                {
+                    Console.WriteLine("Invalid Token - Token is expired");
+                    return -3;
+                }
+
+                var tokenHash = Helper.ComputeHash(tokenParameter[0], _secretKey);
+                if (tokenHash != tokenParameter[1])
+                {
+                    Console.WriteLine("Invalid Token - Hash Mismatch");
+                    return -4;
+                }
+
+                return customToken.Id;
+            }
+            catch (System.Exception ex)
+            {
+                Console.WriteLine("Invalid Token - " + ex.Message);
+                return -1;
+            }
         }
     }
 }

@@ -1,22 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
-using Newtonsoft.Json;
-using UserManagement.Models;
-using Microsoft.AspNetCore.Authentication;
 using UserManagement.Handlers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace UserManagement
 {
@@ -38,14 +33,21 @@ namespace UserManagement
             // services.AddScoped<IUserManagement, MockUserManagement>();
             services.AddScoped<IUserManagement, SqlUserManagement>();
             services.AddScoped<IUserAuthentication, UserAuthentication>();
-            services.AddSingleton<ITokenManager, TokenManager>();
+            services.AddSingleton<ITokenManager, JwtManager>();
 
             services.AddControllers()
                 .AddNewtonsoftJson();
 
-            services.AddAuthentication("CustomAuth")
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null)
-                .AddScheme<AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomAuth", null);
+                .AddScheme<AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomAuth", null)
+                .AddJwtBearer(options => 
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters{
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"])),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ClockSkew = TimeSpan.Zero
+                    });
 
             services.AddSwaggerGen(c =>
             {

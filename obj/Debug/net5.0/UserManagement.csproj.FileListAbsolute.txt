@@ -127,3 +127,4 @@ C:\Old_Data\Shashank\source\demo\UserManagement\obj\Debug\net5.0\UserManagement.
 C:\Old_Data\Shashank\source\demo\UserManagement\bin\Debug\net5.0\Microsoft.AspNetCore.JsonPatch.dll
 C:\Old_Data\Shashank\source\demo\UserManagement\bin\Debug\net5.0\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
 C:\Old_Data\Shashank\source\demo\UserManagement\bin\Debug\net5.0\Newtonsoft.Json.Bson.dll
+C:\Old_Data\Shashank\source\demo\UserManagement\bin\Debug\net5.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
